@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@jimp/jpeg": "^0.8.5",
+    "color-space": "^1.16.0",
     "jimp": "^0.8.5",
     "yarn": "^1.19.1"
   }

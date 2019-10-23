@@ -19,6 +19,8 @@
     "@jimp/jpeg": "^0.8.5",
     "color-space": "^1.16.0",
     "jimp": "^0.8.5",
+    "livecam": "^0.2.0",
+    "node-webcam": "^0.5.0",
     "yarn": "^1.19.1"
   }
 }

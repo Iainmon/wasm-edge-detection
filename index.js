@@ -1,6 +1,7 @@
 console.info('Loading module...');
 
 const fs = require("fs");
+const ArrayFlattener = require('./ArrayFlattener');
 const compiled = new WebAssembly.Module(fs.readFileSync(__dirname + "/build/optimized.wasm"));
 const imports = {
     env: {
@@ -19,7 +20,20 @@ console.info('Module loaded!\n');
 
 const bindings = module.exports;
 
-console.log(bindings.add(1, 1));
+
+const kernelMultipliers = [
+    [1, 1, 1],
+    [1, 1, 1],
+    [1, 1, 1]
+];
+
+const flattenedKernelMultipliers = ArrayFlattener.flatten2DArray(kernelMultipliers);
+const flattenedKernelMultipliersWidth = kernelMultipliers.length;
+
+let ptr = module.__retain(module.__allocArray(module.INT32ARRAY, flattenedKernelMultipliers));
+
+let kernel = new module.exports.Kernel(ptr);
+console.log(kernel.getAverage());
 
 
 

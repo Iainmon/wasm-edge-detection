@@ -3,6 +3,8 @@ console.info('Loading module...');
 const fs = require("fs");
 const ArrayFlattener = require('./ArrayFlattener');
 const compiled = new WebAssembly.Module(fs.readFileSync(__dirname + "/build/optimized.wasm"));
+const loader = require("assemblyscript/lib/loader");
+
 const imports = {
     env: {
         MY_CONST: 500,
@@ -12,14 +14,9 @@ const imports = {
     },
 
 };
-Object.defineProperty(module, "exports", {
-    get: () => new WebAssembly.Instance(compiled, imports).exports
-});
+const instance = loader.instantiateSync(compiled, imports);
 
 console.info('Module loaded!\n');
-
-const bindings = module.exports;
-
 
 const kernelMultipliers = [
     [1, 1, 1],
@@ -30,11 +27,24 @@ const kernelMultipliers = [
 const flattenedKernelMultipliers = ArrayFlattener.flatten2DArray(kernelMultipliers);
 const flattenedKernelMultipliersWidth = kernelMultipliers.length;
 
-let ptr = module.__retain(module.__allocArray(module.INT32ARRAY, flattenedKernelMultipliers));
+console.log('got here');
+let kernelMultipliers_ptr = instance.__retain(instance.__allocArray(instance.INT32ARRAY_ID, flattenedKernelMultipliers));
+let kernel = new instance.Kernel(kernelMultipliers_ptr, 3);
 
-let kernel = new module.exports.Kernel(ptr);
-console.log(kernel.getAverage());
+const kernelInput = [
+    [1, 1, 1, 1, 1, 100, 100, 100, 100],
+    [1, 1, 1, 1, 1, 100, 100, 100, 100],
+    [1, 1, 1, 1, 1, 100, 100, 100, 100],
+    [1, 1, 1, 1, 1, 100, 100, 100, 100],
+    [1, 1, 1, 1, 1, 100, 100, 100, 100]
+];
 
+let flattenedKernelInput = ArrayFlattener.flatten2DArray(kernelInput);
 
+let flattenedKernelInput_ptr = instance.__retain(instance.__allocArray(instance.INT32ARRAY_ID, flattenedKernelInput));
 
+console.log('got here 2');
+kernel.iterate(flattenedKernelInput_ptr, kernelInput[0].length, kernelInput.length)
+const kernelOutput = ArrayFlattener.constructFlattenedArray(instance.__getInt32Array(flattenedKernelInput_ptr), kernelInput[0].length, kernelInput.length);
 
+console.log(kernelOutput);

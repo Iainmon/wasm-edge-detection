@@ -1,5 +1,7 @@
 /// <reference path="../node_modules/assemblyscript/index.d.ts" />
 
+export const INT32ARRAY_ID = idof<Array<i32>>()
+
 function flatten2DArray(array: Array<Array<i32>>): Array<i32> {
     let flattenedArray = new Array<i32>();
 
@@ -27,6 +29,14 @@ function constructFlattenedArray(array: Array<i32>, width: i32, heigth: i32): Ar
     return constructedArray;
 }
 
+export function getKernelAverage(kernel: Kernel): i32 {
+    return kernel.getAverage();
+}
+export function getKernelSize(kernel: Kernel): i32 {
+    return kernel.size;
+}
+
+
 export class Kernel {
 
     public size: i32;
@@ -36,8 +46,9 @@ export class Kernel {
 
     public products: Array<Array<i32>>;
 
-    constructor(multipliers: Array<Array<i32>>) {
-        this.size = multipliers.length;
+    constructor(_multipliers: Array<i32>, width: i32) {
+        let multipliers: Array<Array<i32>> = constructFlattenedArray(_multipliers, width, width);
+        this.size = width;
         this.margin = Math.floor(this.size / 2) as i32;
 
         this.multipliers = new Array<Array<i32>>();
@@ -66,7 +77,9 @@ export class Kernel {
         return Math.round(sum / this.size) as i32;
     }
 
-    public iterate(grid: Array<Array<i32>>): Array<Array<i32>> {
+    public iterate(flattenedGrid: Array<i32>, width: i32, heigth: i32): Array<i32> {
+
+        let grid: Array<Array<i32>> = constructFlattenedArray(flattenedGrid, width, heigth);
 
         let newGrid: Array<Array<i32>> = new Array<Array<i32>>();
 
@@ -87,6 +100,10 @@ export class Kernel {
             }
         }
 
-        return newGrid;
+        flattenedGrid = flatten2DArray(newGrid);
+
+        return flatten2DArray(newGrid);
     }
 }
+
+export const KERNEL_CLASS_ID = idof<Kernel>()

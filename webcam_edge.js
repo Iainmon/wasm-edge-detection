@@ -1,14 +1,14 @@
 const ColorSpace = require('color-space');
 const Jimp = require('jimp');
-const KernelIterator = require('./KernelItorator');
+const KernelIterator = require('./KernelIterator');
 const cam = require('./capture');
 
-const greyscaleGrid = new Array();
 console.log('Capturing image...');
-
-cam.capture('webcam_image', (err, data) => {
+let processImage = (err, data) => {
 
     if (err) { return console.error(err); }
+
+    let greyscaleGrid = new Array();
 
     console.log('Reading image...');
 
@@ -43,12 +43,13 @@ cam.capture('webcam_image', (err, data) => {
             [1, 2, 1]
         ];
 
-        let blurKernelIterator = new KernelIterator(greyscaleGrid, blurKernelMultipliers);
+        let blurKernelIterator = new KernelIterator();
 
-        let bluredGreyscaleGrid = blurKernelIterator.process();
+        let bluredGreyscaleGrid = blurKernelIterator.iterate(greyscaleGrid, blurKernelMultipliers);
+        blurKernelIterator.realloc();
 
-        for (let x = 0; x < width; x++) {
-            for (let y = 0; y < height; y++) {
+        for (let x = 0; x < bluredGreyscaleGrid.length; x++) {
+            for (let y = 0; y < bluredGreyscaleGrid[0].length; y++) {
                 let grey = Math.min(bluredGreyscaleGrid[x][y], 255);
                 greyscaleGrid[x][y] = grey;
             }
@@ -72,11 +73,14 @@ cam.capture('webcam_image', (err, data) => {
             [1, 2, 1]
         ];
 
-        let kernelIteratorX = new KernelIterator(greyscaleGrid, kernelMultipliersX);
-        let kernelIteratorY = new KernelIterator(greyscaleGrid, kernelMultipliersY);
+        let kernelIteratorX = new KernelIterator();
+        let kernelIteratorY = new KernelIterator();
 
-        let greyscaleX = kernelIteratorX.process();
-        let greyscaleY = kernelIteratorY.process();
+        let greyscaleX = kernelIteratorX.iterate(greyscaleGrid, kernelMultipliersX);
+        let greyscaleY = kernelIteratorY.iterate(greyscaleGrid, kernelMultipliersY);
+
+        kernelIteratorX.realloc();
+        kernelIteratorY.realloc();
 
         let newGreyScaleGrid = greyscaleGrid;
 
@@ -112,7 +116,7 @@ cam.capture('webcam_image', (err, data) => {
         //         let orientation = Math.atan(greyscaleY[x][y] / greyscaleX[x][y]) * (180 / Math.PI);
         //         orientation = isNaN(orientation) ? 0 : orientation;
         //         let rgb = ColorSpace.hsl.rgb([orientation, 100, 50]);
-        //         angleEdgeColors[x][y] = { r: rgb[0] / 127, g: rgb[1] / 127, b: rgb[2] / 127 };
+        //         angleEdgeColors[x][y] = { r: rgb[0] / 255, g: rgb[1] / 255, b: rgb[2] / 255 };
 
         //     }
         // }
@@ -130,7 +134,11 @@ cam.capture('webcam_image', (err, data) => {
         console.log('Saving image...');
         image.write('webcam_image_edges.jpeg');
 
+        setTimeout(function () {cam.capture('webcam_image', processImage);}, 10);
+
     });
 
 
-})
+};
+
+setTimeout(function () {cam.capture('webcam_image', processImage);}, 10);
